@@ -1,0 +1,91 @@
+vagrant@k8sminion1:~$  sudo ovs-vsctl show
+23058732-9e8d-41fe-8ffa-dc97300bfedd
+    Bridge "brenp0s9"
+        fail_mode: standalone
+        Port "k8s-patch-brenp0s9-br-int"
+            Interface "k8s-patch-brenp0s9-br-int"
+                type: patch
+                options: {peer="k8s-patch-br-int-brenp0s9"}
+        Port "enp0s9"
+            Interface "enp0s9"
+        Port "brenp0s9"
+            Interface "brenp0s9"
+                type: internal
+    Bridge br-int
+        Port "k8s-patch-br-int-brenp0s9"
+            Interface "k8s-patch-br-int-brenp0s9"
+                type: patch
+                options: {peer="k8s-patch-brenp0s9-br-int"}
+        Port "k8s-k8sminion1"
+            Interface "k8s-k8sminion1"
+                type: internal
+        Port "ovn-57f48e-0"
+            Interface "ovn-57f48e-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+        Port "ovn-9ac787-0"
+            Interface "ovn-9ac787-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.11"}
+        Port br-int
+            Interface br-int
+                type: internal
+    ovs_version: "2.8.1"
+vagrant@k8sminion1:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:39:99:10:d1:5e brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::39:99ff:fe10:d15e/64 scope link 
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:92:b4:e8 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.12/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast master ovs-system state UP group default qlen 1000
+    link/ether 08:00:27:9f:db:9d brd ff:ff:ff:ff:ff:ff
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:52:80:97:3a brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether ca:3e:44:f0:1e:7a brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 02:07:3c:51:26:4d brd ff:ff:ff:ff:ff:ff
+9: k8s-k8sminion1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 86:76:93:fc:aa:d1 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.2/24 scope global k8s-k8sminion1
+       valid_lft forever preferred_lft forever
+10: brenp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 08:00:27:9f:db:9d brd ff:ff:ff:ff:ff:ff
+    inet 10.10.0.12/24 brd 10.10.0.255 scope global brenp0s9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe9f:db9d/64 scope link 
+       valid_lft forever preferred_lft forever
+11: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether da:29:37:19:e8:c0 brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::d829:37ff:fe19:e8c0/64 scope link 
+       valid_lft forever preferred_lft forever
+vagrant@k8sminion1:~$ ps aux | grep ovn
+root     28611  0.0  0.2  27380  5468 ?        S    04:32   0:00 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-nb.log --remote=punix:/var/run/openvswitch/ovnnb_db.sock --pidfile=/var/run/openvswitch/ovnnb_db.pid --remote=db:OVN_Northbound,NB_Global,connections --unixctl=ovnnb_db.ctl --private-key=db:OVN_Northbound,SSL,private_key --certificate=db:OVN_Northbound,SSL,certificate --ca-cert=db:OVN_Northbound,SSL,ca_cert --ssl-protocols=db:OVN_Northbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Northbound,SSL,ssl_ciphers /etc/openvswitch/ovnnb_db.db
+root     28619  0.0  0.2  27468  5604 ?        S    04:32   0:00 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-sb.log --remote=punix:/var/run/openvswitch/ovnsb_db.sock --pidfile=/var/run/openvswitch/ovnsb_db.pid --remote=db:OVN_Southbound,SB_Global,connections --unixctl=ovnsb_db.ctl --private-key=db:OVN_Southbound,SSL,private_key --certificate=db:OVN_Southbound,SSL,certificate --ca-cert=db:OVN_Southbound,SSL,ca_cert --ssl-protocols=db:OVN_Southbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Southbound,SSL,ssl_ciphers /etc/openvswitch/ovnsb_db.db
+root     28624  0.0  0.1  27664  2352 ?        S<s  04:32   0:00 ovn-northd: monitoring pid 28625 (healthy)
+root     28625  0.0  0.1  27796  3964 ?        S<   04:32   0:00 ovn-northd -vconsole:emer -vsyslog:err -vfile:info --ovnnb-db=unix:/var/run/openvswitch/ovnnb_db.sock --ovnsb-db=unix:/var/run/openvswitch/ovnsb_db.sock --no-chdir --log-file=/var/log/openvswitch/ovn-northd.log --pidfile=/var/run/openvswitch/ovn-northd.pid --detach --monitor
+root     30315  0.0  0.1  51420  3780 ?        S    04:34   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=10.10.0.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     30316  0.4  1.1 156604 23768 ?        Sl   04:34   0:12 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitchovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=10.10.0.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     30391  0.0  0.1  27812  2480 ?        S<s  04:34   0:00 ovn-controller: monitoring pid 30392 (healthy)
+root     30392  0.3  0.5  31856 10576 ?        S<   04:34   0:09 ovn-controller unix:/var/run/openvswitch/db.sock -vconsole:emer -vsyslog:err -vfile:info --private-key=/etc/openvswitch/ovncontroller-privkey.pem --certificate=/etc/openvswitch/ovncontroller-cert.pem --bootstrap-ca-cert=/etc/openvswitch/ovnsb-ca.cert --no-chdir --log-file=/var/log/openvswitch/ovn-controller.log --pidfile=/var/run/openvswitch/ovn-controller.pid --detach --monitor
+vagrant  31356  0.0  0.0  12944   968 pts/0    S+   05:21   0:00 grep --color=auto ovn
+vagrant@k8sminion1:~$ ps aux | grep kube
+root     30237  0.0  0.1  51420  3844 ?        S    04:34   0:00 sudo ./kubelet --kubeconfig /home/vagrant/kubeconfig.yaml --v=2 --address=0.0.0.0 --fail-swap-on=false --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice --enable-server=true --network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin/
+root     30239  1.4  2.6 561124 53608 ?        Sl   04:34   0:41 ./kubelet --kubeconfig /home/vagrant/kubeconfig.yaml --v=2 --address=0.0.0.0 --fail-swap-on=false --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice --enable-server=true --network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin/
+root     30315  0.0  0.1  51420  3780 ?        S    04:34   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=10.10.0.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     30316  0.4  1.1 156604 23768 ?        Sl   04:34   0:12 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=10.10.0.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+vagrant  31358  0.0  0.0  12944   972 pts/0    S+   05:21   0:00 grep --color=auto kube
+vagrant@k8sminion1:~$

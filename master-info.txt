@@ -1,0 +1,210 @@
+vagrant@k8smaster:~$  ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:39:99:10:d1:5e brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::39:99ff:fe10:d15e/64 scope link 
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:b0:83:24 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.11/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:eb:34:29 brd ff:ff:ff:ff:ff:ff
+    inet 10.10.0.11/24 brd 10.10.0.255 scope global enp0s9
+       valid_lft forever preferred_lft forever
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:65:18:97:f5 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 92:ed:12:a1:b3:57 brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 62:d9:44:14:41:47 brd ff:ff:ff:ff:ff:ff
+9: k8s-k8smaster: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether e2:76:2d:d9:c2:72 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.2/24 scope global k8s-k8smaster
+       valid_lft forever preferred_lft forever
+10: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether d6:ff:b8:f9:b2:2b brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::d4ff:b8ff:fef9:b22b/64 scope link 
+       valid_lft forever preferred_lft forever
+vagrant@k8smaster:~$ sudo ovs-vsctl show 
+29dee1c9-65ba-4761-b6bb-d022f31606fe
+    Bridge br-int
+        Port "ovn-57f48e-0"
+            Interface "ovn-57f48e-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+        Port "ovn-b28eb8-0"
+            Interface "ovn-b28eb8-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.12"}
+        Port "k8s-k8smaster"
+            Interface "k8s-k8smaster"
+                type: internal
+        Port br-int
+            Interface br-int
+                type: internal
+    ovs_version: "2.8.1"
+vagrant@k8smaster:~$ kubectl get no -owide
+kuybNAME         STATUS    ROLES     AGE       VERSION   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+k8sminion1   Ready     <none>    45m       v1.8.8    <none>        Ubuntu 16.04.4 LTS   4.4.0-119-generic   docker://17.5.0
+k8sminion2   Ready     <none>    13m       v1.8.8    <none>        Ubuntu 16.04.4 LTS   4.4.0-119-generic   docker://17.5.0
+vagrant@k8smaster:~$ kubectl get ep -owide
+NAME         ENDPOINTS         AGE
+kubernetes   10.10.0.11:6443   57m
+
+vagrant@k8smaster:~/k8s/server/kubernetes/server/bin$ ll
+total 1859800
+drwxr-xr-x 1 vagrant vagrant       884 Feb  9 22:00 ./
+drwxr-xr-x 1 vagrant vagrant       102 Feb  9 21:59 ../
+-rwxr-xr-x 1 vagrant vagrant  55191532 Feb  9 21:59 apiextensions-apiserver*
+-rwxr-xr-x 1 vagrant vagrant 109306478 Feb  9 21:59 cloud-controller-manager*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 cloud-controller-manager.docker_tag
+-rw-r--r-- 1 vagrant vagrant 110683136 Feb  9 21:59 cloud-controller-manager.tar
+-rwxr-xr-x 1 vagrant vagrant 236888000 Feb  9 21:59 hyperkube*
+-rwxr-xr-x 1 vagrant vagrant 136737665 Feb  9 21:59 kubeadm*
+-rwxr-xr-x 1 vagrant vagrant  54030144 Feb  9 21:59 kube-aggregator*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-aggregator.docker_tag
+-rw-r--r-- 1 vagrant vagrant  55406592 Feb  9 21:59 kube-aggregator.tar
+-rwxr-xr-x 1 vagrant vagrant 193579897 Feb  9 21:59 kube-apiserver*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-apiserver.docker_tag
+-rw-r--r-- 1 vagrant vagrant 194956288 Feb  9 21:59 kube-apiserver.tar
+-rwxr-xr-x 1 vagrant vagrant 128451223 Feb  9 21:59 kube-controller-manager*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-controller-manager.docker_tag
+-rw-r--r-- 1 vagrant vagrant 129827840 Feb  9 21:59 kube-controller-manager.tar
+-rwxr-xr-x 1 vagrant vagrant  52492214 Feb  9 22:00 kubectl*
+-rwxr-xr-x 1 vagrant vagrant  56091648 Feb  9 22:00 kubefed*
+-rwxr-xr-x 1 vagrant vagrant 138082408 Feb  9 21:59 kubelet*
+-rwxr-xr-x 1 vagrant vagrant  48092971 Feb  9 21:59 kube-proxy*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-proxy.docker_tag
+-rw-r--r-- 1 vagrant vagrant  95204864 Feb  9 21:59 kube-proxy.tar
+-rwxr-xr-x 1 vagrant vagrant  53985504 Feb  9 21:59 kube-scheduler*
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-scheduler.docker_tag
+-rw-r--r-- 1 vagrant vagrant  55362048 Feb  9 21:59 kube-scheduler.tar
+
+
+vagrant@k8smaster:~/k8s/server/kubernetes/server/bin$ echo $PATH
+/home/vagrant/bin:/home/vagrant/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/home/vagrant/k8s/server/kubernetes/server/bin
+vagrant@k8smaster:~/k8s/server/kubernetes/server/bin$ 
+
+
+vagrant@k8smaster:~$ ls -la
+total 101876
+drwxr-xr-x 7 vagrant vagrant      4096 Apr 17 18:31 .
+drwxr-xr-x 4 root    root         4096 Apr 17 18:25 ..
+-rw-rw-r-- 1 vagrant vagrant       234 Apr 17 18:31 apache-e-w.yaml
+-rw-rw-r-- 1 vagrant vagrant       253 Apr 17 18:31 apache-n-s.yaml
+-rw-rw-r-- 1 vagrant vagrant       150 Apr 17 18:31 apache-pod.yaml
+-rw-r--r-- 1 vagrant vagrant       220 Apr 13 22:09 .bash_logout
+-rw-r--r-- 1 vagrant vagrant      3771 Apr 13 22:09 .bashrc
+drwx------ 2 vagrant vagrant      4096 Apr 17 18:25 .cache
+-rw-rw-r-- 1 vagrant vagrant 104247844 Oct 25 23:41 go1.9.2.linux-amd64.tar.gz
+drwxr-xr-x 1 vagrant vagrant       170 Apr 17 17:48 k8s
+drwxrwxr-x 4 vagrant vagrant      4096 Apr 17 18:31 .kube
+-rw-rw-r-- 1 vagrant vagrant       427 Apr 17 18:31 kubeconfig.yaml
+-rw-rw-r-- 1 vagrant vagrant       140 Apr 17 18:31 nginx-pod.yaml
+-rw-r--r-- 1 vagrant vagrant       655 Apr 13 22:09 .profile
+-rw------- 1 root    root         1024 Apr 17 18:29 .rnd
+-rw-rw-r-- 1 vagrant vagrant        84 Apr 17 18:31 setup_k8s_master_args.sh
+-rw-rw-r-- 1 vagrant vagrant       106 Apr 17 18:29 setup_master_args.sh
+drwx------ 2 vagrant vagrant      4096 Apr 17 18:25 .ssh
+drwxrwxr-x 3 vagrant vagrant      4096 Apr 17 18:30 work
+vagrant@k8smaster:~$ cat apache-e-w.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: apacheservice
+    role: service
+  name: apacheservice
+spec:
+  ports:
+    - port: 8800
+      targetPort: 80
+      protocol: TCP
+      name: tcp
+  selector:
+    name: webserver
+vagrant@k8smaster:~$ cat apache-n-s.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: apacheexternal
+    role: service
+  name: apacheexternal
+spec:
+  ports:
+    - port: 8800
+      targetPort: 80
+      protocol: TCP
+      name: tcp
+  selector:
+    name: webserver
+  type: NodePort
+vagrant@k8smaster:~$ cat apache-pod.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apachetwin
+  labels:
+    name: webserver
+spec:
+  containers:
+  - name: apachetwin
+    image: fedora/apache
+vagrant@k8smaster:~$ cat kubeconfig.yaml 
+apiVersion: v1
+clusters:
+- cluster:
+    server: http://localhost:8080
+  name: default-cluster
+- cluster:
+    server: http://localhost:8080
+  name: local-server
+- cluster:
+    server: http://localhost:8080
+  name: ubuntu
+contexts:
+- context:
+    cluster: ubuntu
+    user: ubuntu
+  name: ubuntu
+current-context: ubuntu
+kind: Config
+preferences: {}
+users:
+- name: ubuntu
+  user:
+    password: p1NVMZqhOOOqkWQq
+    username: admin
+vagrant@k8smaster:~$ 
+vagrant@k8smaster:~$ cat nginx-pod.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginxtwin
+  labels:
+    name: webserver
+spec:
+  containers:
+  - name: nginxtwin
+    image: nginx
+vagrant@k8smaster:~$ 
+
+vagrant@k8smaster:~$ kubectl create -f apache-pod.yaml 
+pod "apachetwin" created
+vagrant@k8smaster:~$ kubectl create -f nginx-pod.yaml 
+pod "nginxtwin" created
+vagrant@k8smaster:~$ kubectl create -f apache-e-w.yaml 
+service "apacheservice" created
+vagrant@k8smaster:~$ kubectl create -f apache-n-s.yaml 
+service "apacheexternal" created

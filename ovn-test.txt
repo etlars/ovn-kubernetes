@@ -1,0 +1,256 @@
+vagrant@k8smaster:~$ kubectl create -f apache-pod.yaml 
+pod "apachetwin" created
+vagrant@k8smaster:~$ kubectl create -f nginx-pod.yaml 
+pod "nginxtwin" created
+vagrant@k8smaster:~$ kubectl create -f apache-e-w.yaml 
+service "apacheservice" created
+vagrant@k8smaster:~$ kubectl create -f apache-n-s.yaml 
+service "apacheexternal" created
+
+
+vagrant@k8smaster:~$ kubectl get po -o wide --all-namespaces
+NAMESPACE   NAME                        READY     STATUS    RESTARTS   AGE       IP            NODE
+default     apachetwin                  1/1       Running   0          3m        192.168.2.5   k8sminion2
+default     nginxtwin                   1/1       Running   0          3m        192.168.1.5   k8sminion1
+mc1group    iperfmc1-6479845666-p7r5c   1/1       Running   0          25m       192.168.1.3   k8sminion1
+mc1group    iperfmc1-6479845666-tnl9f   1/1       Running   0          25m       192.168.2.3   k8sminion2
+mc2group    iperfmc2-8669484746-2s78j   1/1       Running   0          25m       192.168.2.4   k8sminion2
+mc2group    iperfmc2-8669484746-vssmh   1/1       Running   0          25m       192.168.1.4   k8sminion1
+vagrant@k8smaster:~$ kubectl get svc -o wide
+NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE       SELECTOR
+apacheexternal   NodePort    172.16.1.101   <none>        8800:31017/TCP   2m        name=webserver
+apacheservice    ClusterIP   172.16.1.152   <none>        8800/TCP         3m        name=webserver
+kubernetes       ClusterIP   172.16.1.1     <none>        443/TCP          40m       <none>
+vagrant@k8smaster:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:39:99:10:d1:5e brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::39:99ff:fe10:d15e/64 scope link 
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:07:02:f5 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.11/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:f5:9d:9d brd ff:ff:ff:ff:ff:ff
+    inet 10.10.0.11/24 brd 10.10.0.255 scope global enp0s9
+       valid_lft forever preferred_lft forever
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:b2:dc:d7:9d brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 12:fe:ab:78:11:88 brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 0e:c8:df:22:ec:44 brd ff:ff:ff:ff:ff:ff
+9: k8s-k8smaster: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 8e:a0:21:ac:39:1d brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.2/24 scope global k8s-k8smaster
+       valid_lft forever preferred_lft forever
+10: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether 32:c5:21:a3:0b:32 brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::30c5:21ff:fea3:b32/64 scope link 
+       valid_lft forever preferred_lft forever
+
+
+vagrant@k8smaster:~$ kubectl describe pod 
+Name:         apachetwin
+Namespace:    default
+Node:         k8sminion2/192.168.33.13
+Start Time:   Wed, 18 Apr 2018 06:35:27 +0000
+Labels:       name=webserver
+Annotations:  ovn={"ip_address":"192.168.2.5/24", "mac_address":"0a:00:00:00:00:05", "gateway_ip": "192.168.2.1"}
+Status:       Running
+IP:           192.168.2.5
+Containers:
+  apachetwin:
+    Container ID:   docker://edc3f27561d08707297cb671d323886f968c4168cb57841a59bb3911542bde48
+    Image:          fedora/apache
+    Image ID:       docker-pullable://fedora/apache@sha256:8531786520bb57b155bbb39d3c670dceab554b9c4ccdb556ccfbe89b23df414c
+    Port:           <none>
+    State:          Running
+      Started:      Wed, 18 Apr 2018 06:36:32 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:         <none>
+Conditions:
+  Type           Status
+  Initialized    True 
+  Ready          True 
+  PodScheduled   True 
+Volumes:         <none>
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     <none>
+Events:
+  Type     Reason             Age                 From                 Message
+  ----     ------             ----                ----                 -------
+  Normal   Pulling            11m                 kubelet, k8sminion2  pulling image "fedora/apache"
+  Normal   Scheduled          11m                 default-scheduler    Successfully assigned apachetwin to k8sminion2
+  Normal   Pulled             10m                 kubelet, k8sminion2  Successfully pulled image "fedora/apache"
+  Normal   Created            10m                 kubelet, k8sminion2  Created container
+  Normal   Started            10m                 kubelet, k8sminion2  Started container
+  Warning  MissingClusterDNS  50s (x13 over 11m)  kubelet, k8sminion2  kubelet does not have ClusterDNS IP configured and cannot create Pod using "ClusterFirst" policy. Falling back to DNSDefault policy.
+
+
+Name:           busybox-56b5f5cd9d-hggnk
+Namespace:      default
+Node:           k8sminion2/192.168.33.13
+Start Time:     Wed, 18 Apr 2018 06:45:42 +0000
+Labels:         pod-template-hash=1261917858
+                run=busybox
+Annotations:    kubernetes.io/created-by={"kind":"SerializedReference","apiVersion":"v1","reference":{"kind":"ReplicaSet","namespace":"default","name":"busybox-56b5f5cd9d","uid":"23afa00f-42d4-11e8-9a20-02399910d15e"...
+                ovn={"ip_address":"192.168.2.6/24", "mac_address":"0a:00:00:00:00:07", "gateway_ip": "192.168.2.1"}
+Status:         Running
+IP:             192.168.2.6
+Created By:     ReplicaSet/busybox-56b5f5cd9d
+Controlled By:  ReplicaSet/busybox-56b5f5cd9d
+Containers:
+  busybox:
+    Container ID:  docker://3e6a0c2f0cf48434d8519f4ee17e6c10f49dc29232560d61507d47a66e5f3741
+    Image:         busybox
+    Image ID:      docker-pullable://busybox@sha256:58ac43b2cc92c687a32c8be6278e50a063579655fe3090125dcb2af0ff9e1a64
+    Port:          <none>
+    Args:
+      sh
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Wed, 18 Apr 2018 06:46:01 +0000
+      Finished:     Wed, 18 Apr 2018 06:47:03 +0000
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:         <none>
+Conditions:
+  Type           Status
+  Initialized    True 
+  Ready          False 
+  PodScheduled   True 
+Volumes:         <none>
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     <none>
+Events:
+  Type     Reason             Age               From                 Message
+  ----     ------             ----              ----                 -------
+  Normal   Scheduled          1m                default-scheduler    Successfully assigned busybox-56b5f5cd9d-hggnk to k8sminion2
+  Normal   Pulled             1m                kubelet, k8sminion2  Successfully pulled image "busybox"
+  Normal   Created            1m                kubelet, k8sminion2  Created container
+  Normal   Started            1m                kubelet, k8sminion2  Started container
+  Warning  MissingClusterDNS  22s (x6 over 1m)  kubelet, k8sminion2  kubelet does not have ClusterDNS IP configured and cannot create Pod using "ClusterFirst" policy. Falling back to DNSDefault policy.
+  Normal   Pulling            22s (x2 over 1m)  kubelet, k8sminion2  pulling image "busybox"
+
+
+Name:         nginxtwin
+Namespace:    default
+Node:         k8sminion1/192.168.33.12
+Start Time:   Wed, 18 Apr 2018 06:35:37 +0000
+Labels:       name=webserver
+Annotations:  ovn={"ip_address":"192.168.1.5/24", "mac_address":"0a:00:00:00:00:06", "gateway_ip": "192.168.1.1"}
+Status:       Running
+IP:           192.168.1.5
+Containers:
+  nginxtwin:
+    Container ID:   docker://981d4a8b6304a47b73bdd5ecb5f30c1fd949e15c30642e22acd960633d712f67
+    Image:          nginx
+    Image ID:       docker-pullable://nginx@sha256:18156dcd747677b03968621b2729d46021ce83a5bc15118e5bcced925fb4ebb9
+    Port:           <none>
+    State:          Running
+      Started:      Wed, 18 Apr 2018 06:36:51 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:         <none>
+Conditions:
+  Type           Status
+  Initialized    True 
+  Ready          True 
+  PodScheduled   True 
+Volumes:         <none>
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     <none>
+Events:
+  Type     Reason             Age                 From                 Message
+  ----     ------             ----                ----                 -------
+  Normal   Scheduled          11m                 default-scheduler    Successfully assigned nginxtwin to k8sminion1
+  Normal   Pulling            11m                 kubelet, k8sminion1  pulling image "nginx"
+  Normal   Pulled             10m                 kubelet, k8sminion1  Successfully pulled image "nginx"
+  Normal   Created            10m                 kubelet, k8sminion1  Created container
+  Normal   Started            10m                 kubelet, k8sminion1  Started container
+  Warning  MissingClusterDNS  27s (x13 over 11m)  kubelet, k8sminion1  kubelet does not have ClusterDNS IP configured and cannot create Pod using "ClusterFirst" policy. Falling back to DNSDefault policy.
+vagrant@k8smaster:~$ 
+
+
+
+
+
+외부에서 minion의 hostIp:Nodeport 로 호출해보면  
+APACHE와 NGNIX 페이지가 번갈아 나온다. 
+
+mac:provisioning colorapple$ curl 10.10.0.12:31017
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+mac:provisioning colorapple$ curl 10.10.0.13:31017
+Apache
+mac:provisioning colorapple$ 
+mac:provisioning colorapple$ curl 10.10.0.13:31017
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+mac:provisioning colorapple$ 
+
