@@ -1,0 +1,53 @@
+vagrant@k8smaster:~$ kubectl create ns mc1group
+namespace "mc1group" created
+vagrant@k8smaster:~$ kubectl create ns mc2group
+namespace "mc2group" created
+vagrant@k8smaster:~$ kubectl run iperfmc1 --image=mlabbe/iperf -n mc1group --replicas=2
+deployment "iperfmc1" created
+vagrant@k8smaster:~$ kubectl run iperfmc2 --image=mlabbe/iperf -n mc2group --replicas=2
+deployment "iperfmc2" created
+vagrant@k8smaster:~$ kubectl get po -o wide --all-namespaces
+NAMESPACE   NAME                        READY     STATUS    RESTARTS   AGE       IP            NODE
+mc1group    iperfmc1-6479845666-gzfsm   1/1       Running   0          21s       192.168.1.3   k8sminion1
+mc1group    iperfmc1-6479845666-xv48j   1/1       Running   0          21s       192.168.2.3   k8sminion2
+mc2group    iperfmc2-8669484746-tbjhl   1/1       Running   0          11s       192.168.2.4   k8sminion2
+mc2group    iperfmc2-8669484746-trgjt   1/1       Running   0          11s       192.168.1.4   k8sminion1
+vagrant@k8smaster:~$
+
+
+
+
+vagrant@k8smaster:~$ kubectl exec -it -n mc1group iperfmc1-6479845666-gzfsm -- /bin/sh
+/ $ iperf -c 192.168.2.4 -p 5530 -i 1
+------------------------------------------------------------
+Client connecting to 192.168.2.4, TCP port 5530
+TCP window size: 45.0 KByte (default)
+------------------------------------------------------------
+[  3] local 192.168.1.3 port 36468 connected with 192.168.2.4 port 5530
+[ ID] Interval       Transfer     Bandwidth
+[  3]  0.0- 1.0 sec   142 MBytes  1.19 Gbits/sec
+[  3]  1.0- 2.0 sec   122 MBytes  1.03 Gbits/sec
+[  3]  2.0- 3.0 sec   132 MBytes  1.11 Gbits/sec
+[  3]  3.0- 4.0 sec   121 MBytes  1.01 Gbits/sec
+[  3]  4.0- 5.0 sec   133 MBytes  1.11 Gbits/sec
+[  3]  5.0- 6.0 sec   115 MBytes   968 Mbits/sec
+[  3]  6.0- 7.0 sec   127 MBytes  1.06 Gbits/sec
+[  3]  7.0- 8.0 sec   124 MBytes  1.04 Gbits/sec
+[  3]  8.0- 9.0 sec   124 MBytes  1.04 Gbits/sec
+[  3]  9.0-10.0 sec   111 MBytes   929 Mbits/sec
+[  3]  0.0-10.0 sec  1.22 GBytes  1.05 Gbits/sec
+
+vagrant@k8smaster:~$ kubectl exec -it iperfmc2-8669484746-tbjhl -n mc2group -- /bin/sh
+/ $ iperf -s -p 5530
+------------------------------------------------------------
+Server listening on TCP port 5530
+TCP window size: 85.3 KByte (default)
+------------------------------------------------------------
+[  4] local 192.168.2.4 port 5530 connected with 192.168.1.3 port 36466
+[ ID] Interval       Transfer     Bandwidth
+[  4]  0.0-10.0 sec  1.24 GBytes  1.06 Gbits/sec
+[  5] local 192.168.2.4 port 5530 connected with 192.168.1.3 port 36468
+[  5]  0.0-10.0 sec  1.22 GBytes  1.05 Gbits/sec
+
+
+
