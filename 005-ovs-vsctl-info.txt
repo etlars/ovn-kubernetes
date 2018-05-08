@@ -1,0 +1,289 @@
+
+vagrant@k8smaster:~$ sudo ovs-vsctl show
+d05ab48d-bdc7-4790-b900-b6a96d3b7b3e
+    Bridge br-int
+        fail_mode: secure
+        Port br-int
+            Interface br-int
+                type: internal
+        Port "ovn-1e325e-0"
+            Interface "ovn-1e325e-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.12"}
+        Port "k8s-k8smaster"
+            Interface "k8s-k8smaster"
+                type: internal
+        Port "ovn-fd336d-0"
+            Interface "ovn-fd336d-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+    ovs_version: "2.8.1"
+vagrant@k8smaster:~$
+
+vagrant@k8sminion1:~$ sudo ovs-vsctl show
+54810693-a758-4488-8fb9-75972b128a57
+    Bridge "brenp0s9"
+        fail_mode: standalone
+        Port "enp0s9"
+            Interface "enp0s9"
+        Port "k8s-patch-brenp0s9-br-int"
+            Interface "k8s-patch-brenp0s9-br-int"
+                type: patch
+                options: {peer="k8s-patch-br-int-brenp0s9"}
+        Port "brenp0s9"
+            Interface "brenp0s9"
+                type: internal
+    Bridge br-int
+        fail_mode: secure
+        Port "9d89284ffc83df2"
+            Interface "9d89284ffc83df2"
+        Port "k8s-k8sminion1"
+            Interface "k8s-k8sminion1"
+                type: internal
+        Port br-int
+            Interface br-int
+                type: internal
+        Port "ovn-fd336d-0"
+            Interface "ovn-fd336d-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+        Port "ovn-726bbd-0"
+            Interface "ovn-726bbd-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.11"}
+        Port "5730b2fad2aac13"
+            Interface "5730b2fad2aac13"
+        Port "k8s-patch-br-int-brenp0s9"
+            Interface "k8s-patch-br-int-brenp0s9"
+                type: patch
+                options: {peer="k8s-patch-brenp0s9-br-int"}
+    ovs_version: "2.8.1"
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion2:~$ sudo ovs-vsctl show
+9151fe29-0f07-4449-9e43-18f82b6ec54f
+    Bridge "brenp0s9"
+        fail_mode: standalone
+        Port "enp0s9"
+            Interface "enp0s9"
+        Port "brenp0s9"
+            Interface "brenp0s9"
+                type: internal
+        Port "k8s-patch-brenp0s9-br-int"
+            Interface "k8s-patch-brenp0s9-br-int"
+                type: patch
+                options: {peer="k8s-patch-br-int-brenp0s9"}
+    Bridge br-int
+        fail_mode: secure
+        Port "ovn-1e325e-0"
+            Interface "ovn-1e325e-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.12"}
+        Port br-int
+            Interface br-int
+                type: internal
+        Port "e93dacd5f9f6a84"
+            Interface "e93dacd5f9f6a84"
+        Port "ovn-726bbd-0"
+            Interface "ovn-726bbd-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.11"}
+        Port "44027b6190ab683"
+            Interface "44027b6190ab683"
+        Port "k8s-k8sminion2"
+            Interface "k8s-k8sminion2"
+                type: internal
+        Port "k8s-patch-br-int-brenp0s9"
+            Interface "k8s-patch-br-int-brenp0s9"
+                type: patch
+                options: {peer="k8s-patch-brenp0s9-br-int"}
+    ovs_version: "2.8.1"
+vagrant@k8sminion2:~$
+
+vagrant@k8smaster:~$ kubectl get netpol --all-namespaces
+No resources found.
+
+
+
+vagrant@k8sminion1:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:d4:20:7b:c2:aa brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::d4:20ff:fe7b:c2aa/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:a5:59:c1 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.12/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast master ovs-system state UP group default qlen 1000
+    link/ether 08:00:27:3d:4e:f6 brd ff:ff:ff:ff:ff:ff
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:5f:a5:25:34 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether fe:6f:82:d5:ea:2d brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 2e:93:02:bf:3e:41 brd ff:ff:ff:ff:ff:ff
+9: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether 52:e0:bc:1c:f1:7a brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::50e0:bcff:fe1c:f17a/64 scope link
+       valid_lft forever preferred_lft forever
+10: k8s-k8sminion1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 7e:84:1a:b6:ac:1f brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.2/24 scope global k8s-k8sminion1
+       valid_lft forever preferred_lft forever
+11: brenp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 08:00:27:3d:4e:f6 brd ff:ff:ff:ff:ff:ff
+    inet 30.1.1.12/24 brd 30.1.1.255 scope global brenp0s9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe3d:4ef6/64 scope link
+       valid_lft forever preferred_lft forever
+12: 9d89284ffc83df2@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue master ovs-system state UP group default
+    link/ether 72:b1:53:d6:b9:82 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::70b1:53ff:fed6:b982/64 scope link
+       valid_lft forever preferred_lft forever
+13: 5730b2fad2aac13@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue master ovs-system state UP group default
+    link/ether 06:14:76:5b:d0:6b brd ff:ff:ff:ff:ff:ff link-netnsid 1
+    inet6 fe80::414:76ff:fe5b:d06b/64 scope link
+       valid_lft forever preferred_lft forever
+       
+       
+vagrant@k8sminion2:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:d4:20:7b:c2:aa brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::d4:20ff:fe7b:c2aa/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:2a:a8:6b brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.13/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast master ovs-system state UP group default qlen 1000
+    link/ether 08:00:27:f7:4d:68 brd ff:ff:ff:ff:ff:ff
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:e9:80:e9:aa brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether ee:b6:f7:c6:60:6e brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 8e:cb:e0:7d:0a:43 brd ff:ff:ff:ff:ff:ff
+9: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether fe:c3:f9:94:27:e6 brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::fcc3:f9ff:fe94:27e6/64 scope link
+       valid_lft forever preferred_lft forever
+10: k8s-k8sminion2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether d6:63:08:64:3b:7f brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.2/24 scope global k8s-k8sminion2
+       valid_lft forever preferred_lft forever
+11: brenp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 08:00:27:f7:4d:68 brd ff:ff:ff:ff:ff:ff
+    inet 30.1.1.13/24 brd 30.1.1.255 scope global brenp0s9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fef7:4d68/64 scope link
+       valid_lft forever preferred_lft forever
+12: 44027b6190ab683@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue master ovs-system state UP group default
+    link/ether 6e:06:98:f7:2c:15 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::6c06:98ff:fef7:2c15/64 scope link
+       valid_lft forever preferred_lft forever
+13: e93dacd5f9f6a84@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue master ovs-system state UP group default
+    link/ether 82:b0:dc:70:11:70 brd ff:ff:ff:ff:ff:ff link-netnsid 1
+    inet6 fe80::80b0:dcff:fe70:1170/64 scope link
+       valid_lft forever preferred_lft forever
+vagrant@k8sminion2:~$
+
+
+vagrant@k8sminion1:~$ sudo ovs-ofctl show br-int
+OFPT_FEATURES_REPLY (xid=0x2): dpid:00002e9302bf3e41
+n_tables:254, n_buffers:0
+capabilities: FLOW_STATS TABLE_STATS PORT_STATS QUEUE_STATS ARP_MATCH_IP
+actions: output enqueue set_vlan_vid set_vlan_pcp strip_vlan mod_dl_src mod_dl_dst mod_nw_src mod_nw_dst mod_nw_tos mod_tp_src mod_tp_dst
+ 1(ovn-fd336d-0): addr:d2:03:a1:be:1d:db
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 2(ovn-726bbd-0): addr:9e:8b:da:35:8a:40
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 3(k8s-k8sminion1): addr:7e:84:1a:b6:ac:1f
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 4(k8s-patch-br-in): addr:42:17:2e:f2:62:cb
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 5(9d89284ffc83df2): addr:72:b1:53:d6:b9:82
+     config:     0
+     state:      0
+     current:    10GB-FD COPPER
+     speed: 10000 Mbps now, 0 Mbps max
+ 6(5730b2fad2aac13): addr:06:14:76:5b:d0:6b
+     config:     0
+     state:      0
+     current:    10GB-FD COPPER
+     speed: 10000 Mbps now, 0 Mbps max
+ LOCAL(br-int): addr:2e:93:02:bf:3e:41
+     config:     PORT_DOWN
+     state:      LINK_DOWN
+     speed: 0 Mbps now, 0 Mbps max
+OFPT_GET_CONFIG_REPLY (xid=0x4): frags=normal miss_send_len=0
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion2:~$ sudo ovs-ofctl show br-int
+OFPT_FEATURES_REPLY (xid=0x2): dpid:00008ecbe07d0a43
+n_tables:254, n_buffers:0
+capabilities: FLOW_STATS TABLE_STATS PORT_STATS QUEUE_STATS ARP_MATCH_IP
+actions: output enqueue set_vlan_vid set_vlan_pcp strip_vlan mod_dl_src mod_dl_dst mod_nw_src mod_nw_dst mod_nw_tos mod_tp_src mod_tp_dst
+ 1(ovn-726bbd-0): addr:5e:28:36:cf:61:65
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 2(k8s-k8sminion2): addr:d6:63:08:64:3b:7f
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 3(k8s-patch-br-in): addr:aa:d1:7e:4f:ad:fa
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 4(ovn-1e325e-0): addr:ce:bf:fe:06:8e:9e
+     config:     0
+     state:      0
+     speed: 0 Mbps now, 0 Mbps max
+ 5(44027b6190ab683): addr:6e:06:98:f7:2c:15
+     config:     0
+     state:      0
+     current:    10GB-FD COPPER
+     speed: 10000 Mbps now, 0 Mbps max
+ 6(e93dacd5f9f6a84): addr:82:b0:dc:70:11:70
+     config:     0
+     state:      0
+     current:    10GB-FD COPPER
+     speed: 10000 Mbps now, 0 Mbps max
+ LOCAL(br-int): addr:8e:cb:e0:7d:0a:43
+     config:     PORT_DOWN
+     state:      LINK_DOWN
+     speed: 0 Mbps now, 0 Mbps max
+OFPT_GET_CONFIG_REPLY (xid=0x4): frags=normal miss_send_len=0
+vagrant@k8sminion2:~$
+
+
+
+
