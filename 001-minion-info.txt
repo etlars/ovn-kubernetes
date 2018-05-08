@@ -1,0 +1,264 @@
+vagrant@k8sminion1:~$ cat /etc/hosts
+127.0.0.1	localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1	ip6-localhost	ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+ff02::3	ip6-allhosts
+127.0.1.1	k8sminion1	k8sminion1
+
+192.168.33.11 k8smaster
+192.168.33.12 k8sminion1
+192.168.33.13 k8sminion2
+vagrant@k8sminion1:~$
+
+root@k8sminion1:~# cd /etc/cni/net.d/
+root@k8sminion1:/etc/cni/net.d# ls -la
+total 12
+d--------- 2 root root 4096 May  8 11:48 .
+d--------- 3 root root 4096 May  8 11:48 ..
+-rw-r--r-- 1 root root   55 May  8 11:48 10-ovn-kubernetes.conf
+root@k8sminion1:/etc/cni/net.d# cat 10-ovn-kubernetes.conf
+{"name":"ovn-kubernetes", "type":"ovn-k8s-cni-overlay"}
+
+root@k8sminion1:/etc/cni/net.d#
+root@k8sminion1:/etc/cni/net.d# ps aux | grep kub
+root     14080  0.0  0.1  51420  3840 ?        S    11:48   0:00 sudo ./kubelet --kubeconfig /home/vagrant/kubeconfig.yaml --v=2 --address=0.0.0.0 --fail-swap-on=false --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice --enable-server=true --network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin/
+root     14082  4.0  2.3 425568 47904 ?        Sl   11:48   0:04 ./kubelet --kubeconfig /home/vagrant/kubeconfig.yaml --v=2 --address=0.0.0.0 --fail-swap-on=false --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice --enable-server=true --network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin/
+root     14161  0.0  0.1  51420  3908 ?        S    11:48   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=30.1.1.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     14162  1.3  1.2 238568 25796 ?        Sl   11:48   0:01 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=30.1.1.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     14746  0.0  0.0  12944   928 pts/0    S+   11:50   0:00 grep --color=auto kub
+
+root@k8sminion1:/etc/cni/net.d# ps aux | grep ovn
+root     11868  0.0  0.2  27380  5832 ?        S    11:42   0:00 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-nb.log --remote=punix:/var/run/openvswitch/ovnnb_db.sock --pidfile=/var/run/openvswitch/ovnnb_db.pid --remote=db:OVN_Northbound,NB_Global,connections --unixctl=ovnnb_db.ctl --private-key=db:OVN_Northbound,SSL,private_key --certificate=db:OVN_Northbound,SSL,certificate --ca-cert=db:OVN_Northbound,SSL,ca_cert --ssl-protocols=db:OVN_Northbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Northbound,SSL,ssl_ciphers /etc/openvswitch/ovnnb_db.db
+root     11876  0.0  0.2  27468  5560 ?        S    11:42   0:00 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-sb.log --remote=punix:/var/run/openvswitch/ovnsb_db.sock --pidfile=/var/run/openvswitch/ovnsb_db.pid --remote=db:OVN_Southbound,SB_Global,connections --unixctl=ovnsb_db.ctl --private-key=db:OVN_Southbound,SSL,private_key --certificate=db:OVN_Southbound,SSL,certificate --ca-cert=db:OVN_Southbound,SSL,ca_cert --ssl-protocols=db:OVN_Southbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Southbound,SSL,ssl_ciphers /etc/openvswitch/ovnsb_db.db
+root     11881  0.0  0.1  27664  2328 ?        S<s  11:42   0:00 ovn-northd: monitoring pid 11882 (healthy)
+root     11882  0.0  0.1  27796  2964 ?        S<   11:42   0:00 ovn-northd -vconsole:emer -vsyslog:err -vfile:info --ovnnb-db=unix:/var/run/openvswitch/ovnnb_db.sock --ovnsb-db=unix:/var/run/openvswitch/ovnsb_db.sock --no-chdir --log-file=/var/log/openvswitch/ovn-northd.log --pidfile=/var/run/openvswitch/ovn-northd.pid --detach --monitor
+root     11966  0.0  0.1  27684  2232 ?        S<s  11:42   0:00 ovn-controller: monitoring pid 11967 (healthy)
+root     11967  0.2  0.5  31676 10700 ?        S<   11:42   0:01 ovn-controller unix:/var/run/openvswitch/db.sock -vconsole:emer -vsyslog:err -vfile:info --no-chdir --log-file=/var/log/openvswitch/ovn-controller.log --pidfile=/var/run/openvswitch/ovn-controller.pid --detach --monitor
+root     14161  0.0  0.1  51420  3908 ?        S    11:48   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=30.1.1.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     14162  1.2  1.2 238568 25796 ?        Sl   11:48   0:01 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -loglevel=4 -logfile=/var/log/openvswitch/ovnkube.log -k8s-apiserver=http://192.168.33.11:8080 -init-node=k8sminion1 -nodeport -nb-address=ssl://192.168.33.11:6631 -sb-address=ssl://192.168.33.11:6632 -k8s-token=test -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert -init-gateways -gateway-interface=enp0s9 -gateway-nexthop=30.1.1.1 -service-cluster-ip-range=172.16.1.0/24 -cluster-subnet=192.168.0.0/16
+root     14759  0.0  0.0  12944  1008 pts/0    S+   11:50   0:00 grep --color=auto ovn
+root@k8sminion1:/etc/cni/net.d#
+
+vagrant@k8sminion1:~$ ls -la
+total 115612
+drwxr-xr-x 6 vagrant vagrant      4096 May  8 11:48 .
+drwxr-xr-x 4 root    root         4096 May  8 11:25 ..
+-rw-r--r-- 1 vagrant vagrant       220 May  4 08:35 .bash_logout
+-rw-r--r-- 1 vagrant vagrant      3771 May  4 08:35 .bashrc
+drwx------ 2 vagrant vagrant      4096 May  8 11:25 .cache
+-rw-rw-r-- 1 vagrant vagrant  14085755 May 25  2017 cni-amd64-v0.5.2.tgz
+-rw-rw-r-- 1 vagrant vagrant 104247844 Oct 25  2017 go1.9.2.linux-amd64.tar.gz
+drwxr-xr-x 1 vagrant vagrant       170 Apr 17 02:13 k8s
+-rw-rw-r-- 1 vagrant vagrant       439 May  8 11:48 kubeconfig.yaml
+-rw-r--r-- 1 vagrant vagrant       655 May  4 08:35 .profile
+-rw------- 1 root    root         1024 May  8 11:42 .rnd
+-rw-rw-r-- 1 vagrant vagrant       235 May  8 11:47 setup_minion_args.sh
+drwx------ 2 vagrant vagrant      4096 May  8 11:25 .ssh
+-rw-rw-r-- 1 vagrant vagrant       167 May  8 11:48 .wget-hsts
+drwxrwxr-x 3 vagrant vagrant      4096 May  8 11:44 work
+vagrant@k8sminion1:~$ cat kubeconfig.yaml
+apiVersion: v1
+clusters:
+- cluster:
+    server: http://192.168.33.11:8080
+  name: default-cluster
+- cluster:
+    server: http://192.168.33.11:8080
+  name: local-server
+- cluster:
+    server: http://192.168.33.11:8080
+  name: ubuntu
+contexts:
+- context:
+    cluster: ubuntu
+    user: ubuntu
+  name: ubuntu
+current-context: ubuntu
+kind: Config
+preferences: {}
+users:
+- name: ubuntu
+  user:
+    password: p1NVMZqhOOOqkWQq
+    username: admin
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion1:~$ cat setup_minion_args.sh
+MASTER_OVERLAY_IP=192.168.33.11
+MINION_OVERLAY_IP=192.168.33.12
+PUBLIC_IP=30.1.1.12
+PUBLIC_SUBNET_MASK=255.255.255.0
+MINION_NAME=k8sminion1
+MINION_SUBNET=192.168.2.0/24
+GW_IP=30.1.1.1
+OVN_EXTERNAL=
+PROTOCOL=ssl
+MASTER_IP=192.168.33.11
+
+vagrant@k8sminion1:~$ ls -la /vagrant/k8s/server/kubernetes/server/bin/
+total 1859800
+drwxr-xr-x 1 vagrant vagrant       884 Feb  9 22:00 .
+drwxr-xr-x 1 vagrant vagrant       102 Feb  9 21:59 ..
+-rwxr-xr-x 1 vagrant vagrant  55191532 Feb  9 21:59 apiextensions-apiserver
+-rwxr-xr-x 1 vagrant vagrant 109306478 Feb  9 21:59 cloud-controller-manager
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 cloud-controller-manager.docker_tag
+-rw-r--r-- 1 vagrant vagrant 110683136 Feb  9 21:59 cloud-controller-manager.tar
+-rwxr-xr-x 1 vagrant vagrant 236888000 Feb  9 21:59 hyperkube
+-rwxr-xr-x 1 vagrant vagrant 136737665 Feb  9 21:59 kubeadm
+-rwxr-xr-x 1 vagrant vagrant  54030144 Feb  9 21:59 kube-aggregator
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-aggregator.docker_tag
+-rw-r--r-- 1 vagrant vagrant  55406592 Feb  9 21:59 kube-aggregator.tar
+-rwxr-xr-x 1 vagrant vagrant 193579897 Feb  9 21:59 kube-apiserver
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-apiserver.docker_tag
+-rw-r--r-- 1 vagrant vagrant 194956288 Feb  9 21:59 kube-apiserver.tar
+-rwxr-xr-x 1 vagrant vagrant 128451223 Feb  9 21:59 kube-controller-manager
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-controller-manager.docker_tag
+-rw-r--r-- 1 vagrant vagrant 129827840 Feb  9 21:59 kube-controller-manager.tar
+-rwxr-xr-x 1 vagrant vagrant  52492214 Feb  9 22:00 kubectl
+-rwxr-xr-x 1 vagrant vagrant  56091648 Feb  9 22:00 kubefed
+-rwxr-xr-x 1 vagrant vagrant 138082408 Feb  9 21:59 kubelet
+-rwxr-xr-x 1 vagrant vagrant  48092971 Feb  9 21:59 kube-proxy
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-proxy.docker_tag
+-rw-r--r-- 1 vagrant vagrant  95204864 Feb  9 21:59 kube-proxy.tar
+-rwxr-xr-x 1 vagrant vagrant  53985504 Feb  9 21:59 kube-scheduler
+-rw-r--r-- 1 vagrant vagrant         7 Feb  9 21:59 kube-scheduler.docker_tag
+-rw-r--r-- 1 vagrant vagrant  55362048 Feb  9 21:59 kube-scheduler.tar
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion1:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 02:d4:20:7b:c2:aa brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global enp0s3
+       valid_lft forever preferred_lft forever
+    inet6 fe80::d4:20ff:fe7b:c2aa/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 08:00:27:a5:59:c1 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.33.12/24 brd 192.168.33.255 scope global enp0s8
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast master ovs-system state UP group default qlen 1000
+    link/ether 08:00:27:3d:4e:f6 brd ff:ff:ff:ff:ff:ff
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:5f:a5:25:34 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+7: ovs-system: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether fe:6f:82:d5:ea:2d brd ff:ff:ff:ff:ff:ff
+8: br-int: <BROADCAST,MULTICAST> mtu 1400 qdisc noop state DOWN group default qlen 1000
+    link/ether 2e:93:02:bf:3e:41 brd ff:ff:ff:ff:ff:ff
+9: genev_sys_6081: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 65485 qdisc noqueue master ovs-system state UNKNOWN group default qlen 1000
+    link/ether 52:e0:bc:1c:f1:7a brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::50e0:bcff:fe1c:f17a/64 scope link
+       valid_lft forever preferred_lft forever
+10: k8s-k8sminion1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1400 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 7e:84:1a:b6:ac:1f brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.2/24 scope global k8s-k8sminion1
+       valid_lft forever preferred_lft forever
+11: brenp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 08:00:27:3d:4e:f6 brd ff:ff:ff:ff:ff:ff
+    inet 30.1.1.12/24 brd 30.1.1.255 scope global brenp0s9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe3d:4ef6/64 scope link
+       valid_lft forever preferred_lft forever
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion1:~$ route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         10.0.2.2        0.0.0.0         UG    0      0        0 enp0s3
+10.0.2.0        0.0.0.0         255.255.255.0   U     0      0        0 enp0s3
+30.1.1.0        0.0.0.0         255.255.255.0   U     0      0        0 brenp0s9
+172.16.1.0      192.168.1.1     255.255.255.0   UG    0      0        0 k8s-k8sminion1
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.0.0     192.168.1.1     255.255.0.0     UG    0      0        0 k8s-k8sminion1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 k8s-k8sminion1
+192.168.33.0    0.0.0.0         255.255.255.0   U     0      0        0 enp0s8
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion1:~$ sudo ovs-vsctl show
+54810693-a758-4488-8fb9-75972b128a57
+    Bridge "brenp0s9"
+        fail_mode: standalone
+        Port "enp0s9"
+            Interface "enp0s9"
+        Port "k8s-patch-brenp0s9-br-int"
+            Interface "k8s-patch-brenp0s9-br-int"
+                type: patch
+                options: {peer="k8s-patch-br-int-brenp0s9"}
+        Port "brenp0s9"
+            Interface "brenp0s9"
+                type: internal
+    Bridge br-int
+        fail_mode: secure
+        Port "k8s-k8sminion1"
+            Interface "k8s-k8sminion1"
+                type: internal
+        Port br-int
+            Interface br-int
+                type: internal
+        Port "ovn-fd336d-0"
+            Interface "ovn-fd336d-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+        Port "ovn-726bbd-0"
+            Interface "ovn-726bbd-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.11"}
+        Port "k8s-patch-br-int-brenp0s9"
+            Interface "k8s-patch-br-int-brenp0s9"
+                type: patch
+                options: {peer="k8s-patch-brenp0s9-br-int"}
+    ovs_version: "2.8.1"
+vagrant@k8sminion1:~$
+
+vagrant@k8sminion1:~$ sudo iptables-save
+# Generated by iptables-save v1.6.0 on Tue May  8 11:59:14 2018
+*nat
+:PREROUTING ACCEPT [4:296]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+:DOCKER - [0:0]
+:KUBE-MARK-DROP - [0:0]
+:KUBE-MARK-MASQ - [0:0]
+:KUBE-POSTROUTING - [0:0]
+-A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+-A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+-A POSTROUTING -m comment --comment "kubernetes postrouting rules" -j KUBE-POSTROUTING
+-A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+-A DOCKER -i docker0 -j RETURN
+-A KUBE-MARK-DROP -j MARK --set-xmark 0x8000/0x8000
+-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000
+-A KUBE-POSTROUTING -m comment --comment "kubernetes service traffic requiring SNAT" -m mark --mark 0x4000/0x4000 -j MASQUERADE
+COMMIT
+# Completed on Tue May  8 11:59:14 2018
+# Generated by iptables-save v1.6.0 on Tue May  8 11:59:14 2018
+*filter
+:INPUT ACCEPT [3661:1912470]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [3257:459902]
+:DOCKER - [0:0]
+:DOCKER-ISOLATION - [0:0]
+:KUBE-FIREWALL - [0:0]
+-A INPUT -j KUBE-FIREWALL
+-A FORWARD -j DOCKER-ISOLATION
+-A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -o docker0 -j DOCKER
+-A FORWARD -i docker0 ! -o docker0 -j ACCEPT
+-A FORWARD -i docker0 -o docker0 -j ACCEPT
+-A OUTPUT -j KUBE-FIREWALL
+-A DOCKER-ISOLATION -j RETURN
+-A KUBE-FIREWALL -m comment --comment "kubernetes firewall for dropping marked packets" -m mark --mark 0x8000/0x8000 -j DROP
+COMMIT
+# Completed on Tue May  8 11:59:14 2018
