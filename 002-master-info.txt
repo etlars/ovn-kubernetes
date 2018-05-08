@@ -1,0 +1,97 @@
+vagrant@k8smaster:~$ kubectl get no -o wide
+NAME         STATUS    ROLES     AGE       VERSION   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+k8sminion1   Ready     <none>    1h        v1.8.8    <none>        Ubuntu 16.04.4 LTS   4.4.0-122-generic   docker://17.5.0
+k8sminion2   Ready     <none>    42m       v1.8.8    <none>        Ubuntu 16.04.4 LTS   4.4.0-122-generic   docker://17.5.0
+vagrant@k8smaster:~$ kubectl get ep
+NAME         ENDPOINTS        AGE
+kubernetes   30.1.1.11:6443   1h
+vagrant@k8smaster:~$ kubectl get svc --all-namespaces
+NAMESPACE   NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+default     kubernetes   ClusterIP   172.16.1.1   <none>        443/TCP   1h
+vagrant@k8smaster:~$
+vagrant@k8smaster:~$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"8", GitVersion:"v1.8.8", GitCommit:"2f73858c9e6ede659d6828fe5a1862a48034a0fd", GitTreeState:"clean", BuildDate:"2018-02-09T21:30:57Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"8", GitVersion:"v1.8.8", GitCommit:"2f73858c9e6ede659d6828fe5a1862a48034a0fd", GitTreeState:"clean", BuildDate:"2018-02-09T21:23:25Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
+vagrant@k8smaster:~$ ovs-vsctl show
+ovs-vsctl: unix:/var/run/openvswitch/db.sock: database connection failed (Permission denied)
+vagrant@k8smaster:~$ sudo ovs-vsctl show
+d05ab48d-bdc7-4790-b900-b6a96d3b7b3e
+    Bridge br-int
+        fail_mode: secure
+        Port br-int
+            Interface br-int
+                type: internal
+        Port "ovn-1e325e-0"
+            Interface "ovn-1e325e-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.12"}
+        Port "k8s-k8smaster"
+            Interface "k8s-k8smaster"
+                type: internal
+        Port "ovn-fd336d-0"
+            Interface "ovn-fd336d-0"
+                type: geneve
+                options: {csum="true", key=flow, remote_ip="192.168.33.13"}
+    ovs_version: "2.8.1"
+vagrant@k8smaster:~$
+
+vagrant@k8smaster:~$ ps aux | grep ovn
+root     14336  0.0  0.3  28244  6648 ?        S    10:32   0:02 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-nb.log --remote=punix:/var/run/openvswitch/ovnnb_db.sock --pidfile=/var/run/openvswitch/ovnnb_db.pid --remote=db:OVN_Northbound,NB_Global,connections --unixctl=ovnnb_db.ctl --private-key=db:OVN_Northbound,SSL,private_key --certificate=db:OVN_Northbound,SSL,certificate --ca-cert=db:OVN_Northbound,SSL,ca_cert --ssl-protocols=db:OVN_Northbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Northbound,SSL,ssl_ciphers /etc/openvswitch/ovnnb_db.db
+root     14344  0.0  0.3  28752  7144 ?        S    10:32   0:04 ovsdb-server --detach --monitor -vconsole:off --log-file=/var/log/openvswitch/ovsdb-server-sb.log --remote=punix:/var/run/openvswitch/ovnsb_db.sock --pidfile=/var/run/openvswitch/ovnsb_db.pid --remote=db:OVN_Southbound,SB_Global,connections --unixctl=ovnsb_db.ctl --private-key=db:OVN_Southbound,SSL,private_key --certificate=db:OVN_Southbound,SSL,certificate --ca-cert=db:OVN_Southbound,SSL,ca_cert --ssl-protocols=db:OVN_Southbound,SSL,ssl_protocols --ssl-ciphers=db:OVN_Southbound,SSL,ssl_ciphers /etc/openvswitch/ovnsb_db.db
+root     14349  0.0  0.1  27664  2332 ?        S<s  10:32   0:00 ovn-northd: monitoring pid 14350 (healthy)
+root     14350  0.0  0.2  28252  4696 ?        S<   10:32   0:00 ovn-northd -vconsole:emer -vsyslog:err -vfile:info --ovnnb-db=unix:/var/run/openvswitch/ovnnb_db.sock --ovnsb-db=unix:/var/run/openvswitch/ovnsb_db.sock --no-chdir --log-file=/var/log/openvswitch/ovn-northd.log --pidfile=/var/run/openvswitch/ovn-northd.pid --detach --monitor
+root     14434  0.0  0.1  27684  2384 ?        S<s  10:32   0:00 ovn-controller: monitoring pid 14435 (healthy)
+root     14435  0.2  0.4  30620  9412 ?        S<   10:32   0:15 ovn-controller unix:/var/run/openvswitch/db.sock -vconsole:emer -vsyslog:err -vfile:info --no-chdir --log-file=/var/log/openvswitch/ovn-controller.log --pidfile=/var/run/openvswitch/ovn-controller.pid --detach --monitor
+root     16713  0.0  0.1  51420  3888 ?        S    10:38   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -net-controller -loglevel=4 -k8s-apiserver=http://192.168.33.11:8080 -logfile=/var/log/openvswitch/ovnkube.log -init-master=k8smaster -cluster-subnet=192.168.0.0/16 -service-cluster-ip-range=172.16.1.0/24 -nodeport -nb-address=ssl://192.168.33.11:6631 -nb-server-privkey /etc/openvswitch/ovnnb-privkey.pem -nb-server-cert /etc/openvswitch/ovnnb-cert.pem -nb-server-cacert /vagrant/pki/switchca/cacert.pem -sb-address=ssl://192.168.33.11:6632 -sb-server-privkey /etc/openvswitch/ovnsb-privkey.pem -sb-server-cert /etc/openvswitch/ovnsb-cert.pem -sb-server-cacert /vagrant/pki/switchca/cacert.pem -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert
+root     16720  0.4  1.0 238568 22252 ?        Sl   10:38   0:24 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -net-controller -loglevel=4 -k8s-apiserver=http://192.168.33.11:8080 -logfile=/var/log/openvswitch/ovnkube.log -init-master=k8smaster -cluster-subnet=192.168.0.0/16 -service-cluster-ip-range=172.16.1.0/24 -nodeport -nb-address=ssl://192.168.33.11:6631 -nb-server-privkey /etc/openvswitch/ovnnb-privkey.pem -nb-server-cert /etc/openvswitch/ovnnb-cert.pem -nb-server-cacert /vagrant/pki/switchca/cacert.pem -sb-address=ssl://192.168.33.11:6632 -sb-server-privkey /etc/openvswitch/ovnsb-privkey.pem -sb-server-cert /etc/openvswitch/ovnsb-cert.pem -sb-server-cacert /vagrant/pki/switchca/cacert.pem -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert
+vagrant  17515  0.0  0.0  12944   932 pts/0    S+   12:05   0:00 grep --color=auto ovn
+vagrant@k8smaster:~$
+
+vagrant@k8smaster:~$ ps aux | grep kube
+root     16649  0.0  0.1  51420  3832 ?        S    10:37   0:00 sudo ./kube-apiserver --service-cluster-ip-range=172.16.1.0/24 --address=0.0.0.0 --etcd-servers=http://127.0.0.1:4001 --advertise-address=30.1.1.11 --v=2
+root     16651  2.5  8.4 315668 172180 ?       Sl   10:37   2:12 ./kube-apiserver --service-cluster-ip-range=172.16.1.0/24 --address=0.0.0.0 --etcd-servers=http://127.0.0.1:4001 --advertise-address=30.1.1.11 --v=2
+root     16710  0.0  0.1  51420  3920 ?        S    10:38   0:00 sudo ./kube-controller-manager --master=127.0.0.1:8080 --v=2
+root     16711  0.0  0.1  51420  3932 ?        S    10:38   0:00 sudo ./kube-scheduler --master=127.0.0.1:8080 --v=2
+root     16713  0.0  0.1  51420  3888 ?        S    10:38   0:00 sudo ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -net-controller -loglevel=4 -k8s-apiserver=http://192.168.33.11:8080 -logfile=/var/log/openvswitch/ovnkube.log -init-master=k8smaster -cluster-subnet=192.168.0.0/16 -service-cluster-ip-range=172.16.1.0/24 -nodeport -nb-address=ssl://192.168.33.11:6631 -nb-server-privkey /etc/openvswitch/ovnnb-privkey.pem -nb-server-cert /etc/openvswitch/ovnnb-cert.pem -nb-server-cacert /vagrant/pki/switchca/cacert.pem -sb-address=ssl://192.168.33.11:6632 -sb-server-privkey /etc/openvswitch/ovnsb-privkey.pem -sb-server-cert /etc/openvswitch/ovnsb-cert.pem -sb-server-cacert /vagrant/pki/switchca/cacert.pem -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert
+root     16716  2.7  2.0 108356 42932 ?        Sl   10:38   2:22 ./kube-controller-manager --master=127.0.0.1:8080 --v=2
+root     16718  0.9  0.9  43096 18796 ?        Sl   10:38   0:48 ./kube-scheduler --master=127.0.0.1:8080 --v=2
+root     16720  0.4  1.0 238568 22252 ?        Sl   10:38   0:24 ovnkube -k8s-kubeconfig /home/vagrant/kubeconfig.yaml -net-controller -loglevel=4 -k8s-apiserver=http://192.168.33.11:8080 -logfile=/var/log/openvswitch/ovnkube.log -init-master=k8smaster -cluster-subnet=192.168.0.0/16 -service-cluster-ip-range=172.16.1.0/24 -nodeport -nb-address=ssl://192.168.33.11:6631 -nb-server-privkey /etc/openvswitch/ovnnb-privkey.pem -nb-server-cert /etc/openvswitch/ovnnb-cert.pem -nb-server-cacert /vagrant/pki/switchca/cacert.pem -sb-address=ssl://192.168.33.11:6632 -sb-server-privkey /etc/openvswitch/ovnsb-privkey.pem -sb-server-cert /etc/openvswitch/ovnsb-cert.pem -sb-server-cacert /vagrant/pki/switchca/cacert.pem -nb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -nb-client-cert /etc/openvswitch/ovncontroller-cert.pem -nb-client-cacert /etc/openvswitch/ovnnb-ca.cert -sb-client-privkey /etc/openvswitch/ovncontroller-privkey.pem -sb-client-cert /etc/openvswitch/ovncontroller-cert.pem -sb-client-cacert /etc/openvswitch/ovnsb-ca.cert
+vagrant  17517  0.0  0.0  12944   944 pts/0    S+   12:05   0:00 grep --color=auto kube
+vagrant@k8smaster:~$
+
+
+vagrant@k8smaster:~$ cat /etc/hosts
+127.0.0.1	localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1	ip6-localhost	ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+ff02::3	ip6-allhosts
+127.0.1.1	k8smaster.ovn	k8smaster
+
+192.168.33.11 k8smaster
+192.168.33.12 k8sminion1
+192.168.33.13 k8sminion2
+vagrant@k8smaster:~$
+
+vagrant@k8smaster:~$ sudo docker version
+Client:
+ Version:      17.05.0-ce
+ API version:  1.29
+ Go version:   go1.7.5
+ Git commit:   89658be
+ Built:        Thu May  4 22:10:54 2017
+ OS/Arch:      linux/amd64
+
+Server:
+ Version:      17.05.0-ce
+ API version:  1.29 (minimum version 1.12)
+ Go version:   go1.7.5
+ Git commit:   89658be
+ Built:        Thu May  4 22:10:54 2017
+ OS/Arch:      linux/amd64
+ Experimental: false
+vagrant@k8smaster:~$
